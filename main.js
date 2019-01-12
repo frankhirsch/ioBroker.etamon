@@ -199,48 +199,100 @@ function setObjects() {
 		}
 		//adapter.log.debug("** Create object ["+menuNodes[i].getAttribute("name")+"] "+thisUri);
 		var varObjects = (select('//eta:variable[@uri="'+menuNodes[i].getAttribute("uri").substr(1)+'"]',variables));
-    });
-			//console.log("channel to add: "+thisUri+" => "+menuNodes[i].getAttribute("name"));
-			adapter.log.debug(thisUri+" => "+menuNodes[i].getAttribute("name"));
-		    adapter.setObjectNotExists("test", {
-        		type: 'channel',
-        		common: {
-            		name: "test"
-        		},
-        		native: {}
-    		});
+		//console.log("** Create object ["+menuNodes[i].getAttribute("name")+"] "+thisUri);
+		adapter.stop();
+		if(varObjects.length==0) {
+			console.log("setObjects 03.a - "+i);
+			setChannel(thisUri, menuNodes[i].getAttribute("name"));
 		} else {
-			console.log("setObjects 05 - "+i);
-			/*
-			var strUri        = (select('./@uri',           varObjects[0])[0].nodeValue);
-			var strValue      = (select('./@strValue',      varObjects[0])[0].nodeValue);
-			var unit          = (select('./@unit',          varObjects[0])[0].nodeValue);
-			var decPlaces     = (select('./@decPlaces',     varObjects[0])[0].nodeValue);
-			var scaleFactor   = (select('./@scaleFactor',   varObjects[0])[0].nodeValue);
-			var advTextOffset = (select('./@advTextOffset', varObjects[0])[0].nodeValue);
-			var text          = (select('./text()',         varObjects[0])[0].nodeValue);
+			console.log("setObjects 03.b - "+i);
+			// Read attributes from value node
+			var AttUri           = (select('./@uri',           varObjects[0])[0].nodeValue);
+			var AttStrValue      = (select('./@strValue',      varObjects[0])[0].nodeValue);
+			var AttUnit          = (select('./@unit',          varObjects[0])[0].nodeValue);
+			var AttDecPlaces     = (select('./@decPlaces',     varObjects[0])[0].nodeValue);
+			var AttScaleFactor   = (select('./@scaleFactor',   varObjects[0])[0].nodeValue);
+			var AttAdvTextOffset = (select('./@advTextOffset', varObjects[0])[0].nodeValue);
+			var AttText          = (select('./text()',         varObjects[0])[0].nodeValue);
+			
 			console.log("object to add: "+thisUri+" => "+menuNodes[i].getAttribute("name"));
-			*/
-			/*
-		    adapter.setObjectNotExists(menuNodes[i].getAttribute("uri"), {
-        		type: 'channel',
-        		common: {
-            		name: menuNodes[i].getAttribute("name")
-        		},
-        		native: {}
-    		});
-    		*/	
+			
+			// Set params for object
+			if(AttUnit.length>0) {
+				var outValue = AttText * 1.0 / AttDecPlaces;
+				var outType  = "number"
+				var outUnit  = AttUnit;
+				if(AttUnit=="°C") {
+					var outRole  = "value.temperature";
+				} else {
+					var outRole  = "state";
+				}
+			} else {
+				var outValue = AttStrValue;
+				var outType  = "text"
+				var outUnit  = AttUnit;
+				var outRole  = "state";
+			}
+			adapter.log.silly("outUri  : " + thisUri);
+			adapter.log.silly("  strValue     : " + AttStrValue);
+			adapter.log.silly("  unit         : " + AttUnit);
+			adapter.log.silly("  decPlaces    : " + AttDecPlaces);
+			adapter.log.silly("  scaleFactor  : " + AttScaleFactor);
+			adapter.log.silly("  advTextOffset: " + AttAdvTextOffset);
+			adapter.log.silly("  text()       : " + AttText);
+			adapter.log.silly("    outType  : " + outType);
+			adapter.log.silly("    outValue : " + outValue);
+			adapter.log.silly("    outUnit  : " + outUnit);
+			adapter.log.silly("    outRole  : " + outRole);
+			
+			// Create object and store data
+			setObject(thisUri, menuNodes[i].getAttribute("name"), outType, outUnit, outRole);
+			setValue (thisUri, outValue);
 		}
-		console.log("setObjects 06");
+		console.log("setObjects 04");
 		//console.log(varObjects[0]);
 	}
-	
+	console.log("setObjects 05");
 	
 	
 	
 	
 	
 	adapter.stop();
+}
+
+function setChannel(uri, name) {
+	console.log("setChannel 01 - " + uri);
+    adapter.setObjectNotExists(uri, {
+        type: 'channel',
+        common: {
+            name: name
+        },
+        native: {}
+    });
+    console.log("setChannel 02 - " + uri);
+}
+
+
+function setObject(uri, name, unit, type, role) {
+	console.log("setObject 01 - " + uri);
+    adapter.setObjectNotExists(uri, {
+        type: 'state',
+        common: {
+            name: name,
+            type: type,
+            unit: unit,
+            role: role
+        },
+        native: {}
+    });
+	console.log("setObject 02 - " + uri);
+}
+
+function setValue(uri, value) {
+	console.log("setValue 01 - " + uri);
+    adapter.setState(uri, {val: value, ack: true});
+	console.log("setValue 02 - " + uri);
 }
 
 
