@@ -1,0 +1,46 @@
+{
+  "name": "etamon",
+  "version": "0.0.1",
+  "description": "etamon",
+  "author": {
+    "name": "Frank Hirsch",
+    "email": "frank.hirsch@mac.com"
+  },
+  "contributors": [
+    {
+      "name": "Frank Hirsch",
+      "email": "frank.hirsch@mac.com"
+    }
+  ],
+  "homepage": "https://github.com/frankhirsch/ioBroker.etamon",
+  "license": "MIT",
+  "keywords": [
+    "ioBroker",
+    "etamon",
+    "Smart Home",
+    "home automation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/frankhirsch/ioBroker.etamon"
+  },
+  "dependencies": {
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2",
+    "xpath": "^0.0.27",
+    "xmldom": "0.1.27"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "mocha": "^4.1.0",
+    "chai": "^4.1.2"
+  },
+  "main": "main.js",
+  "scripts": {
+    "test": "node node_modules/mocha/bin/mocha --exit"
+  },
+  "bugs": {
+    "url": "https://github.com/frankhirsch/ioBroker.etamon/issues"
+  },
+  "readmeFilename": "README.md"
+}
