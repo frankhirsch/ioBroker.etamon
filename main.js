@@ -102,7 +102,7 @@ function getMenu(createStructure) {
 function setVariables() {
 	var menuNodes = (select('//eta:*[@uri]', menu));
 	var addedNodes = 0;
-	adapter.log.debug("** "+menuNodes.length+" ETA menu nodes found");
+	adapter.log.debug("** ETA menu nodes found: "+menuNodes.length);
 	
 	for(var i = 0; i<menuNodes.length; i++) {
 		adapter.log.silly("** Try to add ETA menu node ["+i+"/"+menuNodes.length+"]: "+menuNodes[i].getAttribute("uri"));
@@ -299,47 +299,66 @@ function createChannels() {
 		createChannel();
 	} else {
 		adapter.log.debug("** Channels created - next: setObjects");
-		//createObjects();
-		adapter.stop();
+		createObjects();
+		//adapter.stop();
 	}
 }
 
 function createChannel() {
-	console.log("setChannel 01 - " + channels[0][0]);
-    adapter.setObject(channels[0][0], {
+	console.log("createChannel 01 - " + channels[0][0]);
+    adapter.setObjectNotExistsAsync(channels[0][0], {
         type: 'channel',
         common: {
             name: channels[0][1]
         },
         native: {}
     }, function(err) {
-    	adapter.log.debug("callback createChannel...");
+    	// Channel created
     });
     
-    console.log("setChannel 02 - " + channels[0][0]);
+    console.log("createChannel 02 - " + channels[0][0]);
     channels.shift();
     
     createChannels();
 }
 
 function createObjects() {
-	adapter.stop();
+	console.log("** Elements to create: "+elements.length);
+	if(elements.length>0) {	
+		createObject();
+	} else {
+		adapter.log.debug("** Elements created - next: createObject");
+		//createObjects();
+		adapter.stop();
+	}
 }
 
 
-function setObject(uri, name, unit, type, role) {
-	//console.log("setObject 01 - " + uri);
-    adapter.setObjectNotExists(uri, {
+function createObject() {
+	console.log("createObject 01 - " + elements[0][0]);
+	// elements.push([thisUri, menuNodes[i].getAttribute("name"), outType, outUnit, outRole, outValue]);
+    adapter.setObjectNotExistsAsync(elements[0][0], {
         type: 'state',
         common: {
-            name: name,
-            type: type,
-            unit: unit,
-            role: role
+            name: elements[0][1],
+            type: elements[0][2],
+            unit: elements[0][3],
+            role: elements[0][4]
         },
         native: {}
+    }, function(err) {
+    	// Element created
     });
-	//console.log("setObject 02 - " + uri);
+    adapter.setStateAsync(elements[0][0], {
+    	val: elements[0][5], 
+    	ack: true
+    }, function(err) {
+    	// Value set
+    });
+    console.log("createObject 02 - " + elements[0][0]);
+    elements.shift();
+    
+    createObjects();
 }
 
 function setValue(uri, value) {
