@@ -10,6 +10,14 @@ const xmldom    = require('xmldom').DOMParser;
 const select = xpath.useNamespaces({"eta": "http://www.eta.co.at/rest/v1"});
 var   menu;
 var   variables;
+var   addedChannels = 0;
+var   addedObjects = 0;
+var   addedVariables = 0;
+var   skippedVariables = 0;
+
+var   elements = [];
+var   channels = [];
+
 
 adapter.on('ready', function () {
 	// Timeout for adapter if ETA takes too long to respond (overall process)
@@ -30,6 +38,7 @@ adapter.on('ready', function () {
 
 function readEta() {
 	// Check if the expectedt global variable (etamon) does exist in the ETA device
+	adapter.log.debug("** Retrieve ETA variable etamon");
 	request(
 		{
 			url: "http://192.168.178.24:8080/user/vars/etamon",
@@ -63,6 +72,7 @@ function readEta() {
 }
 
 function getMenu(createStructure) {
+	adapter.log.debug("** do: getMenu("+createStructure+")");
 	request(
 		{
 			url: "http://192.168.178.24:8080/user/menu"
@@ -92,8 +102,6 @@ function getMenu(createStructure) {
 function setVariables() {
 	var menuNodes = (select('//eta:*[@uri]', menu));
 	var addedNodes = 0;
-	var addedVariables = 0;
-	var skippedVariables = 0;
 	adapter.log.debug("** "+menuNodes.length+" ETA menu nodes found");
 	
 	for(var i = 0; i<menuNodes.length; i++) {
@@ -104,9 +112,9 @@ function setVariables() {
 				method: "PUT"
 			},
 			function(error, response, content) {
-				adapter.log.silly("**** Adding ETA variable [PUT error]: "+error);
-				adapter.log.silly("**** Adding ETA variable [PUT response]: "+response);
-				adapter.log.silly("**** Adding ETA variable [PUT content]: "+content);
+				// adapter.log.silly("**** Adding ETA variable - error: "+error);
+				// adapter.log.silly("**** Adding ETA variable - response: "+response);
+				adapter.log.silly("**** Adding ETA variable: "+content);
 			}
 		).then(
 			function() {
@@ -135,7 +143,7 @@ function setVariables() {
 }
 
 function getVariables() {
-	console.log("getVariables 01");
+	//console.log("getVariables 01");
 	request(
 		{
 			url: "http://192.168.178.24:8080/user/vars/etamon"
@@ -143,43 +151,44 @@ function getVariables() {
 		function(error, response, content) {
 			if(!error && response.statusCode == 200) {
 				// Everything is ok - lets parse the XML
-				console.log("getVariables 02");
+				//console.log("getVariables 02");
 				variables = new xmldom().parseFromString(content);
-				console.log("getVariables 03");
+				//console.log("getVariables 03");
 			} else {
-				console.log("getVariables 04");
+				//console.log("getVariables 04");
 				adapter.log.error(error);
 			}
 		}
 	).then(
 		function() {
-			console.log("getVariables 05");
-			adapter.log.debug("** Global ETA variables read - next: setObjects");
+			//console.log("getVariables 05");
+			adapter.log.debug("** Global ETA variables read [then] - next: setObjects");
 			setObjects();
 		}
 	).catch(
 		function() {
-			console.log("getVariables 06");
-			adapter.log.debug("** Global ETA variables read - next: setObjects");
-			setObjects();
+			//console.log("getVariables 06");
+			adapter.log.error("** Global ETA variables not readable");
+			adapter.stop();
 		}
 	)
 }
 
 function setObjects() {
-	console.log("setObjects 01");
+	//console.log("setObjects 01");
+	
 	var menuNodes = (select('//eta:*[@uri]', menu));
 	var addedNodes = 0;
 	var addedVariables = 0;
 	var skippedVariables = 0;
 	var thisUri = "";
 	adapter.log.debug("** ETA menu nodes found: "+menuNodes.length);
-	console.log("setObjects 02");
-	//adapter.stop();
+	//console.log("setObjects 02");
+	
 	
 	for(var i = 0; i<menuNodes.length; i++) {
-		console.log("setObjects 03 - "+i);
-		adapter.log.debug("** Try to add ETA menu node ["+i+"/"+menuNodes.length+"]: "+menuNodes[i].getAttribute("uri"));
+		//console.log("setObjects 03 - "+i);
+		//adapter.log.debug("** Try to add ETA menu node ["+i+"/"+menuNodes.length+"]: "+menuNodes[i].getAttribute("uri"));
 		var parentNodes = (select('ancestor::eta:*[@uri]', menuNodes[i]));
 		var parentPath = "";
 		for(var pkey in parentNodes) {
@@ -188,24 +197,27 @@ function setObjects() {
 				if(parentPath!="") {
 					parentPath = parentPath + ".";
 				}
-				parentPath = parentPath + parentNode.getAttribute("uri");
+				parentPath = parentPath + parentNode.getAttribute("uri").substr(1);
 			}
 		}
 		
 		if(parentPath!="") {
-			thisUri = parentPath.split("/").join("_")+"."+menuNodes[i].getAttribute("uri").split("/").join("_");
+			thisUri = parentPath.split("/").join("_")+"."+menuNodes[i].getAttribute("uri").substr(1).split("/").join("_");
 		} else {
-			thisUri = menuNodes[i].getAttribute("uri").split("/").join("_");
+			thisUri = menuNodes[i].getAttribute("uri").substr(1).split("/").join("_");
 		}
 		//adapter.log.debug("** Create object ["+menuNodes[i].getAttribute("name")+"] "+thisUri);
 		var varObjects = (select('//eta:variable[@uri="'+menuNodes[i].getAttribute("uri").substr(1)+'"]',variables));
 		//console.log("** Create object ["+menuNodes[i].getAttribute("name")+"] "+thisUri);
-		adapter.stop();
+		//adapter.stop();
 		if(varObjects.length==0) {
-			console.log("setObjects 03.a - "+i);
-			setChannel(thisUri, menuNodes[i].getAttribute("name"));
+			//console.log("setObjects 03.a - "+i);
+			channels.push([thisUri, menuNodes[i].getAttribute("name")]);
+			adapter.log.silly("** Channel: "+thisUri+" ("+menuNodes[i].getAttribute("name")+") ["+channels.length+"]");
+			//setChannel(thisUri, menuNodes[i].getAttribute("name"));
+			//console.log("** addedChannels: "+addedChannels);
 		} else {
-			console.log("setObjects 03.b - "+i);
+			//console.log("setObjects 03.b - "+i);
 			// Read attributes from value node
 			var AttUri           = (select('./@uri',           varObjects[0])[0].nodeValue);
 			var AttStrValue      = (select('./@strValue',      varObjects[0])[0].nodeValue);
@@ -215,7 +227,7 @@ function setObjects() {
 			var AttAdvTextOffset = (select('./@advTextOffset', varObjects[0])[0].nodeValue);
 			var AttText          = (select('./text()',         varObjects[0])[0].nodeValue);
 			
-			console.log("object to add: "+thisUri+" => "+menuNodes[i].getAttribute("name"));
+			//console.log("object to add: "+thisUri+" => "+menuNodes[i].getAttribute("name"));
 			
 			// Set params for object
 			if(AttUnit.length>0) {
@@ -233,49 +245,90 @@ function setObjects() {
 				var outUnit  = AttUnit;
 				var outRole  = "state";
 			}
-			adapter.log.silly("outUri  : " + thisUri);
-			adapter.log.silly("  strValue     : " + AttStrValue);
-			adapter.log.silly("  unit         : " + AttUnit);
-			adapter.log.silly("  decPlaces    : " + AttDecPlaces);
-			adapter.log.silly("  scaleFactor  : " + AttScaleFactor);
-			adapter.log.silly("  advTextOffset: " + AttAdvTextOffset);
-			adapter.log.silly("  text()       : " + AttText);
-			adapter.log.silly("    outType  : " + outType);
-			adapter.log.silly("    outValue : " + outValue);
-			adapter.log.silly("    outUnit  : " + outUnit);
-			adapter.log.silly("    outRole  : " + outRole);
+			adapter.log.silly("*** outUri  : " + thisUri);
+			adapter.log.silly("***   strValue     : " + AttStrValue);
+			adapter.log.silly("***   unit         : " + AttUnit);
+			adapter.log.silly("***   decPlaces    : " + AttDecPlaces);
+			adapter.log.silly("***   scaleFactor  : " + AttScaleFactor);
+			adapter.log.silly("***   advTextOffset: " + AttAdvTextOffset);
+			adapter.log.silly("***   text()       : " + AttText);
+			adapter.log.silly("***     outType  : " + outType);
+			adapter.log.silly("***     outValue : " + outValue);
+			adapter.log.silly("***     outUnit  : " + outUnit);
+			adapter.log.silly("***     outRole  : " + outRole);
 			
 			// Create object and store data
-			setObject(thisUri, menuNodes[i].getAttribute("name"), outType, outUnit, outRole);
-			setValue (thisUri, outValue);
+			//setObject(thisUri, menuNodes[i].getAttribute("name"), outType, outUnit, outRole);
+			//setValue (thisUri, outValue);
+			elements.push([thisUri, menuNodes[i].getAttribute("name"), outType, outUnit, outRole, outValue]);
+			adapter.log.silly("** Element: "+thisUri+" ("+menuNodes[i].getAttribute("name")+") ["+elements.length+"]");
 		}
-		console.log("setObjects 04");
+		//console.log("setObjects 04");
 		//console.log(varObjects[0]);
 	}
-	console.log("setObjects 05");
+	//console.log("setObjects 05");
+	adapter.log.debug("** Channels: "+channels.length);
+	adapter.log.debug("** Elements: "+elements.length);
+	// adapter.stop();
+	createChannels();
 	
 	
+	/*
+	for(var i = 0; i<channels.length; i++) {
+		setChannel(channels[i][0], channels[i][1]);
+	}
+	for(var i = 0; i<eöements.length; i++) {
+		setObject(eöements[i][0], eöements[i][1], eöements[i][2], eöements[i][3], eöements[i][4]);
+	}
+	*/
+	// setChannel(thisUri, menuNodes[i].getAttribute("name")); -> channels
+	// setObject(thisUri, menuNodes[i].getAttribute("name"), outType, outUnit, outRole) -> eöements
+	// setValue (thisUri, outValue);
 	
+	/*
+	adapter.log.silly("** addedObjects: "+addedObjects+", addedVariables: "+addedVariables);
 	
-	
-	adapter.stop();
+	adapter.log.debug("** ETA Adapter finished");
+	*/
+	//adapter.stop();
 }
 
-function setChannel(uri, name) {
-	console.log("setChannel 01 - " + uri);
-    adapter.setObjectNotExists(uri, {
+function createChannels() {
+	console.log("** Channels to create: "+channels.length);
+	if(channels.length>0) {	
+		createChannel();
+	} else {
+		adapter.log.debug("** Channels created - next: setObjects");
+		//createObjects();
+		adapter.stop();
+	}
+}
+
+function createChannel() {
+	console.log("setChannel 01 - " + channels[0][0]);
+    adapter.setObject(channels[0][0], {
         type: 'channel',
         common: {
-            name: name
+            name: channels[0][1]
         },
         native: {}
+    }, function(err) {
+    	adapter.log.debug("callback createChannel...");
     });
-    console.log("setChannel 02 - " + uri);
+    
+    console.log("setChannel 02 - " + channels[0][0]);
+    channels.shift();
+    
+    createChannels();
+}
+
+function createObjects() {
+	adapter.stop();
 }
 
 
 function setObject(uri, name, unit, type, role) {
-	console.log("setObject 01 - " + uri);
+	//console.log("setObject 01 - " + uri);
     adapter.setObjectNotExists(uri, {
         type: 'state',
         common: {
@@ -286,18 +339,21 @@ function setObject(uri, name, unit, type, role) {
         },
         native: {}
     });
-	console.log("setObject 02 - " + uri);
+	//console.log("setObject 02 - " + uri);
 }
 
 function setValue(uri, value) {
-	console.log("setValue 01 - " + uri);
+	//console.log("setValue 01 - " + uri);
     adapter.setState(uri, {val: value, ack: true});
-	console.log("setValue 02 - " + uri);
+	addedObjects++;
+	console.log("addedObjects: "+addedObjects);
+	//console.log("setValue 02 - " + uri);
 }
 
 
 
 function deleteEta() {
+	adapter.log.debug("** Deleting ETA variabel etamon");
 	request(
 		{
 			url: "http://192.168.178.24:8080/user/vars/etamon",
@@ -312,7 +368,13 @@ function deleteEta() {
 		}
 	).then(
 		function() {
+			adapter.log.debug("** Deleted ETA variabel etamon");
 			readEta();
 		}
-	)
+	).catch(
+		function() {
+			adapter.log.debug("** No ETA variabel etamon found to delete");
+			readEta();
+		}
+	);
 }
