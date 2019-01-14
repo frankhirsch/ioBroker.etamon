@@ -16,6 +16,7 @@ var   addedVariables = 0;
 var   skippedVariables = 0;
 
 var   elements = [];
+var   elementsValue = [];
 var   channels = [];
 
 
@@ -294,18 +295,17 @@ function setObjects() {
 }
 
 function createChannels() {
-	console.log("** Channels to create: "+channels.length);
+	adapter.log.debug("** Channels to create: "+channels.length);
 	if(channels.length>0) {	
 		createChannel();
 	} else {
 		adapter.log.debug("** Channels created - next: setObjects");
 		createObjects();
-		//adapter.stop();
 	}
 }
 
 function createChannel() {
-	console.log("createChannel 01 - " + channels[0][0]);
+	adapter.log.silly("*** Creating channel: " + channels[0][0]);
     adapter.setObjectNotExistsAsync(channels[0][0], {
         type: 'channel',
         common: {
@@ -313,30 +313,33 @@ function createChannel() {
         },
         native: {}
     }, function(err) {
-    	// Channel created
+    	if(err) {
+	    	adapter.log.silly("*** Channel created");
+		    channels.shift();
+		    createChannels();
+	    } else {
+	    	adapter.log.error("*** Channel not created: "+err);
+		    channels.shift();
+		    createChannels();
+	    }
     });
-    
-    console.log("createChannel 02 - " + channels[0][0]);
     channels.shift();
-    
     createChannels();
 }
 
 function createObjects() {
-	console.log("** Elements to create: "+elements.length);
+	adapter.log.debug("** Elements to create: "+elements.length);
 	if(elements.length>0) {	
+		elementsValue.push(elements[0]);
 		createObject();
 	} else {
-		adapter.log.debug("** Elements created - next: createObject");
-		//createObjects();
-		adapter.stop();
+		adapter.log.debug("** Elements created - next: writeObjects");
+		writeObjects();
 	}
 }
 
-
 function createObject() {
-	console.log("createObject 01 - " + elements[0][0]);
-	// elements.push([thisUri, menuNodes[i].getAttribute("name"), outType, outUnit, outRole, outValue]);
+	adapter.log.silly("*** Creating element: " + elements[0][0]);
     adapter.setObjectNotExistsAsync(elements[0][0], {
         type: 'state',
         common: {
@@ -347,29 +350,47 @@ function createObject() {
         },
         native: {}
     }, function(err) {
-    	// Element created
+    	if(!err) {
+	    	adapter.log.silly("*** Element created");
+    		elements.shift();
+    		createObjects();
+	    } else {
+	    	adapter.log.error("*** Element not created: "+err);
+    		elements.shift();
+    		createObjects();
+	    }
     });
-    adapter.setStateAsync(elements[0][0], {
-    	val: elements[0][5], 
+}
+
+function writeObjects() {
+	adapter.log.debug("** Elements to write: "+elementsValue.length);
+	if(elementsValue.length>0) {	
+		writeObject();
+	} else {
+		adapter.log.debug("** Elements written - next: NOTHING");
+		adapter.log.info("** ETA Adapter finished");
+		// Skript finished...
+		adapter.stop();
+	}
+}
+
+function writeObject() {
+	adapter.log.silly("*** Writing element: " + elementsValue[0][0]+" => "+elementsValue[0][5]);
+    adapter.setStateAsync(elementsValue[0][0], {
+    	val: elementsValue[0][5], 
     	ack: true
     }, function(err) {
-    	// Value set
+    	if(!err) {
+	    	adapter.log.silly("*** Element written");
+    		elementsValue.shift();
+    		createObjects();
+	    } else {
+	    	adapter.log.error("*** Element not written: "+err);
+    		elementsValue.shift();
+    		createObjects();
+	    }
     });
-    console.log("createObject 02 - " + elements[0][0]);
-    elements.shift();
-    
-    createObjects();
 }
-
-function setValue(uri, value) {
-	//console.log("setValue 01 - " + uri);
-    adapter.setState(uri, {val: value, ack: true});
-	addedObjects++;
-	console.log("addedObjects: "+addedObjects);
-	//console.log("setValue 02 - " + uri);
-}
-
-
 
 function deleteEta() {
 	adapter.log.debug("** Deleting ETA variabel etamon");
