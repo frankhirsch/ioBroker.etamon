@@ -1,0 +1,5 @@
+node_modules
+.DS_Store
+@eaDir
+__main.js
+_main.js

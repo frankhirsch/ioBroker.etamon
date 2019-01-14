@@ -1,0 +1,49 @@
+{
+    "common": {
+        "name": "etamon",
+        "version": "0.0.1",
+        "news": {
+            "0.0.1": {
+                "en": "initial adapter",
+                "de": "Initiale Version"
+            }
+        },
+		"title": "ETA Monitor",
+        "titleLang": {
+            "en": "ETA Monitor",
+            "de": "ETA Monitor"
+        },
+        "desc": {
+            "en": "Monitor all sensors of your ETA heating",
+            "de": "Monitoring aller ETA Heizungsanlagen Sensoren"
+        },
+        "authors": [
+            "Frank Hirsch <frank.hirsch@mac.com>"
+        ],
+        "docs": {
+            "en": "docs/en/admin.md",
+            "de": "docs/de/admin.md"
+        },
+        "platform": "Javascript/Node.js",
+        "mode": "schedule",
+        "schedule": "* * * * *",
+        "icon": "etamon.png",
+        "materialize": true,
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/frankhirsch/ioBroker.etamon/master/admin/etamon.png",
+        "keywords": ["ETA", "heating", "XML","REST"],
+        "readme": "https://github.com/frankhirsch/ioBroker.etamon/blob/master/README.md",
+        "loglevel": "info",
+        "type": "general",
+        "license": "MIT",
+        "messagebox": false
+    },
+    "native": {
+        "test1": true,
+        "test2": 42,
+        "mySelect": "auto"
+    },
+    "objects": [
+
+    ]
+}

@@ -1,0 +1,7 @@
+{
+  "ETA Service": "ETA Service",
+  "ETA Rest URL (http://ip:8080/user/)": "ETA Rest URL [http://ip:8080/user/]",
+  "ETA Adapter timeout [milliseconds]": "ETA Adapter timeout [milliseconds]",
+  "Timeout": "Timeout",
+  "Debug": "Debug"
+}
