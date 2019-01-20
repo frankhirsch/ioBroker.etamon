@@ -42,7 +42,7 @@ function readEta() {
 	adapter.log.debug("** Retrieve ETA variable etamon");
 	request(
 		{
-			url: "http://192.168.178.24:8080/user/vars/etamon",
+			url: adapter.config.etaService+"vars/etamon",
 			method: "GET"
 		},
 		function(error, response, content) {
@@ -51,7 +51,7 @@ function readEta() {
 				// When restarting/updating the ETA unit, the stored variable will get lost
 				request(
 					{
-						url: "http://192.168.178.24:8080/user/vars/etamon",
+						url: adapter.config.etaService+"vars/etamon",
 						method: "PUT"
 					},
 					function(error, response, content) {
@@ -76,7 +76,7 @@ function getMenu(createStructure) {
 	adapter.log.debug("** do: getMenu("+createStructure+")");
 	request(
 		{
-			url: "http://192.168.178.24:8080/user/menu"
+			url: adapter.config.etaService+"menu"
 		},
 		function(error, response, content) {
 			if(!error && response.statusCode == 200) {
@@ -109,7 +109,7 @@ function setVariables() {
 		adapter.log.silly("** Try to add ETA menu node ["+i+"/"+menuNodes.length+"]: "+menuNodes[i].getAttribute("uri"));
 		request(
 			{
-				url: "http://192.168.178.24:8080/user/vars/etamon" + menuNodes[i].getAttribute("uri"),
+				url: adapter.config.etaService+"vars/etamon" + menuNodes[i].getAttribute("uri"),
 				method: "PUT"
 			},
 			function(error, response, content) {
@@ -147,7 +147,7 @@ function getVariables() {
 	//console.log("getVariables 01");
 	request(
 		{
-			url: "http://192.168.178.24:8080/user/vars/etamon"
+			url: adapter.config.etaService+"vars/etamon"
 		},
 		function(error, response, content) {
 			if(!error && response.statusCode == 200) {
@@ -397,7 +397,7 @@ function deleteEta() {
 	adapter.log.debug("** Deleting ETA variabel etamon");
 	request(
 		{
-			url: "http://192.168.178.24:8080/user/vars/etamon",
+			url: adapter.config.etaService+"vars/etamon",
 			method: "DELETE"
 		},
 		function(error, response, content) {
