@@ -46,24 +46,28 @@ function readEta() {
 			method: "GET"
 		},
 		function(error, response, content) {
-			adapter.log.debug("** Checking if global variable is available");
-			if(content.indexOf("<error>") > -1) {
-				// When restarting/updating the ETA unit, the stored variable will get lost
-				request(
-					{
-						url: adapter.config.etaService+"vars/etamon",
-						method: "PUT"
-					},
-					function(error, response, content) {
-						adapter.log.debug("** Created global variable - next: getMenu(true)");
-						getMenu(true);
-					}
-				).catch(
-					function() { /* FIX possible ETA status 400 */ }
-				)
-			} else {
-				adapter.log.debug("** Global variable is available - next: getMenu(false)");
-				getMenu(false);
+			if(error) {
+				adapter.log.error("** ETA connection issue: "+error);
+			} else |
+				adapter.log.debug("** Checking if global variable is available");
+				if(content.indexOf("<error>") > -1) {
+					// When restarting/updating the ETA unit, the stored variable will get lost
+					request(
+						{
+							url: adapter.config.etaService+"vars/etamon",
+							method: "PUT"
+						},
+						function(error, response, content) {
+							adapter.log.debug("** Created global variable - next: getMenu(true)");
+							getMenu(true);
+						}
+					).catch(
+						function() { /* FIX possible ETA status 400 */ }
+					)
+				} else {
+					adapter.log.debug("** Global variable is available - next: getMenu(false)");
+					getMenu(false);
+				}
 			}
 		}
 	).catch(
@@ -318,7 +322,7 @@ function createChannel() {
 		    channels.shift();
 		    createChannels();
 	    } else {
-	    	adapter.log.error("*** Channel not created (already exists?): "+err);
+	    	adapter.log.silly("*** Channel not created (already exists?): "+err);
 		    channels.shift();
 		    createChannels();
 	    }
