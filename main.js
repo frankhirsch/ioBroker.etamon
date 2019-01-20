@@ -48,7 +48,7 @@ function readEta() {
 		function(error, response, content) {
 			if(error) {
 				adapter.log.error("** ETA connection issue: "+error);
-			} else |
+			} else {
 				adapter.log.debug("** Checking if global variable is available");
 				if(content.indexOf("<error>") > -1) {
 					// When restarting/updating the ETA unit, the stored variable will get lost
