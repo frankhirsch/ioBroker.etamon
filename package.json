@@ -28,13 +28,13 @@
     "request": "^2.88.0",
     "request-promise": "^4.2.2",
     "xpath": "^0.0.27",
-    "xmldom": "0.1.27"
+    "xmldom": "0.1.27",
+    "@iobroker/adapter-core": "^1.0.3"
   },
   "devDependencies": {
     "gulp": "^3.9.1",
     "mocha": "^4.1.0",
-    "chai": "^4.1.2",
-    "@iobroker/adapter-core": "^1.0.3"
+    "chai": "^4.1.2"
   },
   "main": "main.js",
   "scripts": {
