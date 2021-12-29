@@ -3,7 +3,7 @@
 'use strict';
 
 const request   = require('request-promise');
-const utils     = require(__dirname + '/lib/utils');
+const utils = require('@iobroker/adapter-core');
 const adapter   = new utils.Adapter('etamon');
 const xpath     = require('xpath');
 const xmldom    = require('xmldom').DOMParser;
