@@ -28,7 +28,7 @@
     "request": "^2.88.0",
     "request-promise": "^4.2.2",
     "xpath": "^0.0.27",
-    "xmldom": "0.1.27"
+    "xmldom": "0.6.0"
   },
   "devDependencies": {
     "gulp": "^3.9.1",
